@@ -16,7 +16,9 @@ from src.backtest import generate_signals, run_backtest
 
 st.title("ML Trading Strategy Backtester")
 
-ticker = st.selectbox("Choose ticker", ["AAPL", "MSFT", "SPY", "NVDA", "JPM", "TSLA"])
+ALL_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "JPM", "NVDA", "TSLA"]
+
+ticker = st.selectbox("Choose ticker", ALL_TICKERS)
 
 # --- Load and process data for the selected ticker ---
 @st.cache_data
@@ -65,3 +67,31 @@ ax.plot(results["benchmark_curve"].values, label="Buy & Hold")
 ax.set_title(f"{ticker}: Strategy vs Buy & Hold")
 ax.legend()
 st.pyplot(fig)
+
+
+# --- Comparison table across all tickers ---
+@st.cache_data
+def build_summary_table():
+    summary = []
+    for t in ALL_TICKERS:
+        r = load_and_run(t)
+        summary.append({
+            "Ticker": t,
+            "Strategy Sharpe": round(r["sharpe"], 3),
+            "Benchmark Sharpe": round(r["benchmark_sharpe"], 3),
+            "Beats Benchmark?": "Yes" if r["sharpe"] > r["benchmark_sharpe"] else "No",
+            "Max Drawdown %": round(r["max_dd"] * 100, 1),
+        })
+    return pd.DataFrame(summary)
+
+st.subheader("Strategy vs Benchmark Across All Tickers")
+st.caption("Comparing risk-adjusted return (Sharpe ratio) — see explanation below the table.")
+
+summary_df = build_summary_table()
+st.dataframe(summary_df, use_container_width=True)
+
+st.caption(
+    "Note: Sharpe ratio measures return relative to risk taken. A strategy can have a "
+    "lower total return than buy-and-hold but a higher Sharpe if it achieved its return "
+    "with less volatility exposure."
+)
