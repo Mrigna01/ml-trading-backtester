@@ -13,7 +13,7 @@ from src.data_loader import download_data
 from src.features import add_features, add_label
 from src.model import walk_forward_train, FEATURES
 from src.backtest import generate_signals, run_backtest
-
+from src.broker import get_trading_client
 st.title("ML Trading Strategy Backtester")
 
 ALL_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "JPM", "NVDA", "TSLA"]
@@ -95,3 +95,22 @@ st.caption(
     "lower total return than buy-and-hold but a higher Sharpe if it achieved its return "
     "with less volatility exposure."
 )
+
+
+st.subheader("Live Paper Trading Status")
+client = get_trading_client()
+account = client.get_account()
+st.metric("Paper Portfolio Value", f"${float(account.portfolio_value):,.2f}")
+st.metric("Buying Power", f"${float(account.buying_power):,.2f}")
+
+positions = client.get_all_positions()
+if positions:
+    pos_df = pd.DataFrame([{
+        "Ticker": p.symbol,
+        "Qty": p.qty,
+        "Market Value": f"${float(p.market_value):,.2f}",
+        "Unrealized P/L": f"${float(p.unrealized_pl):,.2f}"
+    } for p in positions])
+    st.dataframe(pos_df)
+else:
+    st.write("No open positions currently.")
