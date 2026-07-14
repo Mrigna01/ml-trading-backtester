@@ -1,18 +1,19 @@
 import os
 from dotenv import load_dotenv
-from alpaca.trading.client import TradingClient
+import streamlit as st
 
-load_dotenv()
+load_dotenv()  # always attempt this — harmless no-op if .env doesn't exist (e.g. on Streamlit Cloud)
+
+
 def get_secret(key):
     """
-    Reads a credential from Streamlit secrets (works both on Streamlit Cloud
-    and locally if you have a .streamlit/secrets.toml file), falling back to
-    a .env-loaded environment variable for non-Streamlit scripts like
-    live_trading.py run directly from the terminal.
+    Reads a credential from Streamlit secrets (works on Streamlit Cloud, or
+    locally with a .streamlit/secrets.toml file), falling back to a
+    .env-loaded environment variable otherwise.
     """
     try:
         return st.secrets[key]
-    except (FileNotFoundError, KeyError):
+    except (FileNotFoundError, KeyError, st.errors.StreamlitAPIException):
         return os.getenv(key)
 
 
@@ -26,9 +27,6 @@ def get_trading_client():
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()  # only needed when running this file directly via terminal
-
     client = get_trading_client()
     account = client.get_account()
     print(f"Account status: {account.status}")
