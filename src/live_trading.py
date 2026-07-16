@@ -50,14 +50,14 @@ def generate_todays_signal(ticker):
         df = add_label(df)
         df = df.dropna().reset_index(drop=True)
 
-        # Train on all available history, predict on the most recent row
         from sklearn.ensemble import RandomForestClassifier
         model = RandomForestClassifier(n_estimators=200, max_depth=5, random_state=42)
-        model.fit(df[FEATURES].iloc[:-1], df["label"].iloc[:-1])  # exclude last row (no future label yet)
+        model.fit(df[FEATURES].iloc[:-1], df["label"].iloc[:-1])
         todays_features = df[FEATURES].iloc[[-1]]
         prediction = model.predict(todays_features)[0]
+        probs = model.predict_proba(todays_features)[0]
 
-        logger.info(f"[{ticker}] Signal generated: {int(prediction)}")
+        logger.info(f"[{ticker}] Signal={int(prediction)}, P(up)={probs[1]:.3f}, P(down)={probs[0]:.3f}")
         return int(prediction)
 
     except Exception as e:
