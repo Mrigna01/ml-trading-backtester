@@ -1,0 +1,35 @@
+name: Daily Paper Trading
+
+on:
+  schedule:
+    # Runs at 21:00 UTC = 4:00 PM EST (market close), Monday–Friday only
+    - cron: '0 21 * * 1-5'
+  workflow_dispatch:  # lets you also trigger it manually from GitHub's UI, for testing
+
+jobs:
+  run-trading-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run trading bot
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python -m src.live_trading
+
+      - name: Upload log as artifact
+        if: always()  # upload logs even if the run failed, for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-log-${{ github.run_id }}
+          path: logs/trading_log.txt
