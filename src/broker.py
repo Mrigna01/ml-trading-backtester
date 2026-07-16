@@ -6,15 +6,11 @@ load_dotenv()  # always attempt this — harmless no-op if .env doesn't exist (e
 
 
 def get_secret(key):
-    """
-    Reads a credential from Streamlit secrets (works on Streamlit Cloud, or
-    locally with a .streamlit/secrets.toml file), falling back to a
-    .env-loaded environment variable otherwise.
-    """
     try:
-        return st.secrets[key]
+        value = st.secrets[key]
     except (FileNotFoundError, KeyError, st.errors.StreamlitAPIException):
-        return os.getenv(key)
+        value = os.getenv(key)
+    return value.strip() if value else value
 
 
 def get_trading_client():
